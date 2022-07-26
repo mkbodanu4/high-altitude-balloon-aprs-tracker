@@ -56,7 +56,6 @@ def flush_history(keep=500):
 
 
 def callback(packet):
-
     if configuration['history']['keep'] != 'all':
         flush_history(keep=configuration['history']['keep'])
 
@@ -68,20 +67,8 @@ def callback(packet):
     # Packed must be routed to APRS-IS by IGate only, so app will ignore Radiosonde traffic etc
     q = parsed.get('path')[-2]
     if q in ['qAR', 'qAO', 'qAo']:
-        query = """INSERT INTO `history` SET
-            `call_sign` = %s,
-            `date` = UTC_TIMESTAMP(),
-            `timestamp` = %s,
-            `latitude` = %s,
-            `longitude` = %s,
-            `course` = %s,
-            `speed` = %s,
-            `altitude` = %s,
-            `daodatumbyte` = %s,
-            `comment` = %s,
-            `raw` = %s
-        ON DUPLICATE KEY
-            UPDATE
+        if parsed.get('latitude') and parsed.get('longitude'):
+            query = """INSERT INTO `history` SET
                 `call_sign` = %s,
                 `date` = UTC_TIMESTAMP(),
                 `timestamp` = %s,
@@ -93,37 +80,52 @@ def callback(packet):
                 `daodatumbyte` = %s,
                 `comment` = %s,
                 `raw` = %s
-        ;"""
-        params = (
-            parsed.get('from'),
-            parsed.get('timestamp'),
-            parsed.get('latitude'),
-            parsed.get('longitude'),
-            parsed.get('course'),
-            parsed.get('speed'),
-            parsed.get('altitude'),
-            parsed.get('daodatumbyte'),
-            parsed.get('comment'),
-            parsed.get('raw'),
+            ON DUPLICATE KEY
+                UPDATE
+                    `call_sign` = %s,
+                    `date` = UTC_TIMESTAMP(),
+                    `timestamp` = %s,
+                    `latitude` = %s,
+                    `longitude` = %s,
+                    `course` = %s,
+                    `speed` = %s,
+                    `altitude` = %s,
+                    `daodatumbyte` = %s,
+                    `comment` = %s,
+                    `raw` = %s
+            ;"""
+            params = (
+                parsed.get('from'),
+                parsed.get('timestamp'),
+                parsed.get('latitude'),
+                parsed.get('longitude'),
+                parsed.get('course'),
+                parsed.get('speed'),
+                parsed.get('altitude'),
+                parsed.get('daodatumbyte'),
+                parsed.get('comment'),
+                parsed.get('raw'),
 
-            parsed.get('from'),
-            parsed.get('timestamp'),
-            parsed.get('latitude'),
-            parsed.get('longitude'),
-            parsed.get('course'),
-            parsed.get('speed'),
-            parsed.get('altitude'),
-            parsed.get('daodatumbyte'),
-            parsed.get('comment'),
-            parsed.get('raw')
-        )
+                parsed.get('from'),
+                parsed.get('timestamp'),
+                parsed.get('latitude'),
+                parsed.get('longitude'),
+                parsed.get('course'),
+                parsed.get('speed'),
+                parsed.get('altitude'),
+                parsed.get('daodatumbyte'),
+                parsed.get('comment'),
+                parsed.get('raw')
+            )
 
-        crs = db.cursor()
-        crs.execute(query, params)
-        db.commit()
-        crs.close()
+            crs = db.cursor()
+            crs.execute(query, params)
+            db.commit()
+            crs.close()
 
-        logging.info("Packet from " + parsed.get('from') + " saved to history")
+            logging.info("Packet from " + parsed.get('from') + " saved to history")
+        else:
+            logging.info("Packet from " + parsed.get('from') + " has empty coordinates, ignored")
     else:
         logging.info("Packet from " + parsed.get('from') + " (" + q + "," + parsed.get('via') + "; " + parsed.get(
             "comment") + ") ignored")
