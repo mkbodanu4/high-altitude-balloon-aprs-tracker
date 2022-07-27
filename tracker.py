@@ -3,6 +3,7 @@ import aprslib
 import yaml
 import logging
 import time
+import re
 
 with open("configuration.yaml", 'r') as stream:
     configuration = yaml.safe_load(stream)
@@ -68,20 +69,9 @@ def callback(packet):
     q = parsed.get('path')[-2]
     if q in ['qAR', 'qAO', 'qAo']:
         if parsed.get('latitude') and parsed.get('longitude'):
-            query = """INSERT INTO `history` SET
-                `call_sign` = %s,
-                `date` = UTC_TIMESTAMP(),
-                `timestamp` = %s,
-                `latitude` = %s,
-                `longitude` = %s,
-                `course` = %s,
-                `speed` = %s,
-                `altitude` = %s,
-                `daodatumbyte` = %s,
-                `comment` = %s,
-                `raw` = %s
-            ON DUPLICATE KEY
-                UPDATE
+            regexp = re.compile(r'(RS41|auto_rx|Radiosonde|SondeID|NSM is Not Sonde Monitor)')
+            if not regexp.search(parsed.get('comment')):
+                query = """INSERT INTO `history` SET
                     `call_sign` = %s,
                     `date` = UTC_TIMESTAMP(),
                     `timestamp` = %s,
@@ -93,37 +83,53 @@ def callback(packet):
                     `daodatumbyte` = %s,
                     `comment` = %s,
                     `raw` = %s
-            ;"""
-            params = (
-                parsed.get('from'),
-                parsed.get('timestamp'),
-                parsed.get('latitude'),
-                parsed.get('longitude'),
-                parsed.get('course'),
-                parsed.get('speed'),
-                parsed.get('altitude'),
-                parsed.get('daodatumbyte'),
-                parsed.get('comment'),
-                parsed.get('raw'),
+                ON DUPLICATE KEY
+                    UPDATE
+                        `call_sign` = %s,
+                        `date` = UTC_TIMESTAMP(),
+                        `timestamp` = %s,
+                        `latitude` = %s,
+                        `longitude` = %s,
+                        `course` = %s,
+                        `speed` = %s,
+                        `altitude` = %s,
+                        `daodatumbyte` = %s,
+                        `comment` = %s,
+                        `raw` = %s
+                ;"""
+                params = (
+                    parsed.get('from'),
+                    parsed.get('timestamp'),
+                    parsed.get('latitude'),
+                    parsed.get('longitude'),
+                    parsed.get('course'),
+                    parsed.get('speed'),
+                    parsed.get('altitude'),
+                    parsed.get('daodatumbyte'),
+                    parsed.get('comment'),
+                    parsed.get('raw'),
 
-                parsed.get('from'),
-                parsed.get('timestamp'),
-                parsed.get('latitude'),
-                parsed.get('longitude'),
-                parsed.get('course'),
-                parsed.get('speed'),
-                parsed.get('altitude'),
-                parsed.get('daodatumbyte'),
-                parsed.get('comment'),
-                parsed.get('raw')
-            )
+                    parsed.get('from'),
+                    parsed.get('timestamp'),
+                    parsed.get('latitude'),
+                    parsed.get('longitude'),
+                    parsed.get('course'),
+                    parsed.get('speed'),
+                    parsed.get('altitude'),
+                    parsed.get('daodatumbyte'),
+                    parsed.get('comment'),
+                    parsed.get('raw')
+                )
 
-            crs = db.cursor()
-            crs.execute(query, params)
-            db.commit()
-            crs.close()
+                crs = db.cursor()
+                crs.execute(query, params)
+                db.commit()
+                crs.close()
 
-            logging.info("Packet from " + parsed.get('from') + " saved to history")
+                logging.info("Packet from " + parsed.get('from') + " saved to history")
+            else:
+                logging.info("Packet from " + parsed.get('from') + " (" + parsed.get(
+                    "comment") + ") ignored for being Radiosonde, not amateur radio balloon")
         else:
             logging.info("Packet from " + parsed.get('from') + " has empty coordinates, ignored")
     else:
