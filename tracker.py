@@ -69,7 +69,7 @@ def callback(packet):
     q = parsed.get('path')[-2]
     if q in ['qAR', 'qAO', 'qAo']:
         if parsed.get('latitude') and parsed.get('longitude'):
-            regexp = re.compile(r'(RS41|auto_rx|Radiosonde|SondeID|NSM is Not Sonde Monitor)')
+            regexp = re.compile(r'(' + '|'.join(configuration['aprs']['ignore']) + ')')
             if not regexp.search(parsed.get('comment')):
                 query = """INSERT INTO `history` SET
                     `call_sign` = %s,

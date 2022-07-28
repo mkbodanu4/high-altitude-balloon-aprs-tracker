@@ -2,6 +2,13 @@ aprs:
   callsign: 'UR5WKM-10'
   host: "rotate.aprs2.net"
   filter: "s/O"
+  ignore:
+    - "RS41"
+    - "auto_rx"
+    - "Radiosonde"
+    - "SondeID"
+    - "NSM is Not Sonde Monitor"
+    - "ZOE APRS EV ZERO-EMMISSION"
 
 history:
   # Allowed any number or string 'all' to keep all results in db
