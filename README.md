@@ -14,3 +14,15 @@ Python-based APRS-IS data collector of High Altitude Balloon APRS Tracker. Requi
 3. Update *habat.service* file with the proper path to the installation folder.
 4. Copy *habat.service* file to systemd folder (*/etc/systemd/system/*)
 5. Enable and start a service named *habat*.
+
+## Configuration
+
+* aprs
+  * call_sign - unique call sign and SSID, used to identify you at APRS-IS server
+  * host - hostname of APRS IS server
+  * filter - filter, applied to APRS-IS stream. Keep this as it is
+* history
+  * keep - how many rows keep for every balloon. Number or string 'all' is only allowed.
+* logging
+  * level - use ERROR for production and DEBUG for debugging
+* mysql - MySQL/MariaDB server configuration, use TCP-IP or Unix Socket, depends on your system.
