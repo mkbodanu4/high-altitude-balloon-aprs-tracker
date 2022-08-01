@@ -81,6 +81,12 @@ def callback(packet):
             "Packet from " + parsed.get('from') + " ignored for wrong altitude (" + parsed.get("altitude") + " m)")
         return
 
+    if parsed.get('latitude') < 0.1 and parsed.get('longitude') < 0.1 and parsed.get('latitude') > -0.1 and parsed.get(
+            'longitude') > -0.1:
+        logging.info("Packet from " + parsed.get(
+            'from') + " ignored for wrong coordinates: very close to 0,0 , looks like GPS positioning error")
+        return
+
     regexp = re.compile(r'(' + '|'.join(configuration['aprs']['ignore_comment']) + ')')
     if regexp.search(parsed.get('comment')):
         logging.info("Packet from " + parsed.get('from') + " (" + parsed.get(
