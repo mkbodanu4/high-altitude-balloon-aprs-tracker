@@ -67,74 +67,86 @@ def callback(packet):
 
     # Packed must be routed to APRS-IS by IGate only, so app will ignore Radiosonde traffic etc
     q = parsed.get('path')[-2]
-    if q in ['qAR', 'qAO', 'qAo']:
-        if parsed.get('latitude') and parsed.get('longitude'):
-            regexp = re.compile(r'(' + '|'.join(configuration['aprs']['ignore']) + ')')
-            if not regexp.search(parsed.get('comment')):
-                query = """INSERT INTO `history` SET
-                    `call_sign` = %s,
-                    `date` = UTC_TIMESTAMP(),
-                    `timestamp` = %s,
-                    `latitude` = %s,
-                    `longitude` = %s,
-                    `course` = %s,
-                    `speed` = %s,
-                    `altitude` = %s,
-                    `daodatumbyte` = %s,
-                    `comment` = %s,
-                    `raw` = %s
-                ON DUPLICATE KEY
-                    UPDATE
-                        `call_sign` = %s,
-                        `date` = UTC_TIMESTAMP(),
-                        `timestamp` = %s,
-                        `latitude` = %s,
-                        `longitude` = %s,
-                        `course` = %s,
-                        `speed` = %s,
-                        `altitude` = %s,
-                        `daodatumbyte` = %s,
-                        `comment` = %s,
-                        `raw` = %s
-                ;"""
-                params = (
-                    parsed.get('from'),
-                    parsed.get('timestamp'),
-                    parsed.get('latitude'),
-                    parsed.get('longitude'),
-                    parsed.get('course'),
-                    parsed.get('speed'),
-                    parsed.get('altitude'),
-                    parsed.get('daodatumbyte'),
-                    parsed.get('comment'),
-                    parsed.get('raw'),
-
-                    parsed.get('from'),
-                    parsed.get('timestamp'),
-                    parsed.get('latitude'),
-                    parsed.get('longitude'),
-                    parsed.get('course'),
-                    parsed.get('speed'),
-                    parsed.get('altitude'),
-                    parsed.get('daodatumbyte'),
-                    parsed.get('comment'),
-                    parsed.get('raw')
-                )
-
-                crs = db.cursor()
-                crs.execute(query, params)
-                db.commit()
-                crs.close()
-
-                logging.info("Packet from " + parsed.get('from') + " saved to history")
-            else:
-                logging.info("Packet from " + parsed.get('from') + " (" + parsed.get(
-                    "comment") + ") ignored for being Radiosonde, not amateur radio balloon")
-        else:
-            logging.info("Packet from " + parsed.get('from') + " has empty coordinates, ignored")
-    else:
+    if q not in ['qAR', 'qAO', 'qAo']:
         logging.info("Packet from " + parsed.get('from') + " (" + q + "," + parsed.get('via') + "; " + parsed.get(
             "comment") + ") ignored")
+        return
+
+    if not (parsed.get('latitude') and parsed.get('longitude')):
+        logging.info("Packet from " + parsed.get('from') + " has empty coordinates, ignored")
+        return
+
+    if parsed.get('altitude') < 0:
+        logging.info(
+            "Packet from " + parsed.get('from') + " ignored for wrong altitude (" + parsed.get("altitude") + " m)")
+        return
+
+    regexp = re.compile(r'(' + '|'.join(configuration['aprs']['ignore_comment']) + ')')
+    if regexp.search(parsed.get('comment')):
+        logging.info("Packet from " + parsed.get('from') + " (" + parsed.get(
+            "comment") + ") ignored for being Radiosonde, not amateur radio balloon")
+        return
+
+    if parsed.get('from') in configuration['aprs']['ignore_call_sign']:
+        logging.info("Packet from " + parsed.get('from') + " ignored, reason: ignore list")
+        return
+
+    query = """INSERT INTO `history` SET
+        `call_sign` = %s,
+        `date` = UTC_TIMESTAMP(),
+        `timestamp` = %s,
+        `latitude` = %s,
+        `longitude` = %s,
+        `course` = %s,
+        `speed` = %s,
+        `altitude` = %s,
+        `daodatumbyte` = %s,
+        `comment` = %s,
+        `raw` = %s
+    ON DUPLICATE KEY
+        UPDATE
+            `call_sign` = %s,
+            `date` = UTC_TIMESTAMP(),
+            `timestamp` = %s,
+            `latitude` = %s,
+            `longitude` = %s,
+            `course` = %s,
+            `speed` = %s,
+            `altitude` = %s,
+            `daodatumbyte` = %s,
+            `comment` = %s,
+            `raw` = %s
+    ;"""
+    params = (
+        parsed.get('from'),
+        parsed.get('timestamp'),
+        parsed.get('latitude'),
+        parsed.get('longitude'),
+        parsed.get('course'),
+        parsed.get('speed'),
+        parsed.get('altitude'),
+        parsed.get('daodatumbyte'),
+        parsed.get('comment'),
+        parsed.get('raw'),
+
+        parsed.get('from'),
+        parsed.get('timestamp'),
+        parsed.get('latitude'),
+        parsed.get('longitude'),
+        parsed.get('course'),
+        parsed.get('speed'),
+        parsed.get('altitude'),
+        parsed.get('daodatumbyte'),
+        parsed.get('comment'),
+        parsed.get('raw')
+    )
+
+    crs = db.cursor()
+    crs.execute(query, params)
+    db.commit()
+    crs.close()
+
+    logging.info("Packet from " + parsed.get('from') + " saved to history")
 
 
 AIS = aprslib.IS(configuration['aprs']['callsign'], passwd="-1", host=configuration['aprs']['host'], port=14580)
