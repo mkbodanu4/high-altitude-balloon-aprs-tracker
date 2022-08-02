@@ -78,7 +78,7 @@ def callback(packet):
 
     if parsed.get('altitude') is not None and parsed.get('altitude') < 0:
         logging.info(
-            "Packet from " + parsed.get('from') + " ignored for wrong altitude (" + parsed.get("altitude") + " m)")
+            "Packet from " + parsed.get('from') + " ignored for wrong altitude (" + str(parsed.get("altitude")) + " m)")
         return
 
     if parsed.get('latitude') is None and parsed.get('longitude') is None and parsed.get('latitude') is None and parsed.get(
