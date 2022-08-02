@@ -15,9 +15,12 @@ aprs:
     - "WIDE3-3"
     - "WIDE3-2"
     - "WIDE3-1"
+    - "WIDE3"
     - "WIDE2-2"
     - "WIDE2-1"
+    - "WIDE2"
     - "WIDE1-1"
+    - "WIDE1"
 
 history:
   # Allowed any number or string 'all' to keep all results in db
