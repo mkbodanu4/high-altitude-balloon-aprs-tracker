@@ -10,10 +10,11 @@ Python-based APRS-IS data collector of High Altitude Balloon APRS Tracker. Requi
 ## Installation
 
 1. Upload code to your VPS or server
-2. Update *configuration.yaml* file with your own configuration
-3. Update *habat.service* file with the proper path to the installation folder.
-4. Copy *habat.service* file to systemd folder (*/etc/systemd/system/*)
-5. Enable and start a service named *habat*.
+2. Rename *configuration.example.yaml* to *configuration.yaml*
+3. Update *configuration.yaml* file with your own configuration
+4. Update *habat.service* file with the proper path to the installation folder.
+5. Copy *habat.service* file to systemd folder (*/etc/systemd/system/*)
+6. Enable and start a service named *habat*.
 
 ## Configuration
 

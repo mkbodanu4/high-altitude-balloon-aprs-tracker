@@ -5,7 +5,7 @@ import logging
 import time
 import re
 
-with open("configuration.yaml", 'r') as stream:
+with open("configuration.example.yaml", 'r') as stream:
     configuration = yaml.safe_load(stream)
 
 logging.basicConfig(level=configuration['logging']['level'])
