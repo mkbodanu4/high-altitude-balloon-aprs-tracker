@@ -76,9 +76,15 @@ def callback(packet):
         logging.info("Packet from " + parsed.get('from') + " has empty coordinates, ignored")
         return
 
-    if parsed.get('altitude') < 0:
+    if parsed.get('altitude') is not None and parsed.get('altitude') < 0:
         logging.info(
             "Packet from " + parsed.get('from') + " ignored for wrong altitude (" + parsed.get("altitude") + " m)")
+        return
+
+    if parsed.get('latitude') is None and parsed.get('longitude') is None and parsed.get('latitude') is None and parsed.get(
+            'longitude') is None:
+        logging.info("Packet from " + parsed.get(
+            'from') + " ignored for missing coordinates.")
         return
 
     if parsed.get('latitude') < 0.1 and parsed.get('longitude') < 0.1 and parsed.get('latitude') > -0.1 and parsed.get(
