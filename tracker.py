@@ -63,42 +63,86 @@ def callback(packet):
     try:
         parsed = aprslib.parse(packet)
     except (aprslib.ParseError, aprslib.UnknownFormat) as exp:
-        logging.info(packet + " ignored: can't be parsed")
+        logging.warning(packet + " ignored: can't be parsed")
         return
 
     if configuration['aprs']['allowed_q_construct'] is not None:
         q = parsed.get('path')[-2]
         if q not in configuration['aprs']['allowed_q_construct']:
-            logging.info(parsed.get('from') + " ignored: q construct prohibited (" + q + "," + parsed.get('via') + "; " + parsed.get("comment") + ")")
+            logging.debug(parsed.get('from') + " ignored: q construct prohibited (" + q + "," + parsed.get('via') + "; " + parsed.get("comment") + ")")
             return
 
-    if not (parsed.get('latitude') and parsed.get('longitude')):
-        logging.info(parsed.get('from') + " ignored: empty coordinates")
-        return
-
-    if parsed.get('altitude') is not None and parsed.get('altitude') < 0:
-        logging.info(parsed.get('from') + " ignored: wrong altitude (" + str(parsed.get("altitude")) + ")")
-        return
-
     if parsed.get('latitude') is None or parsed.get('longitude') is None:
-        logging.info(parsed.get('from') + " ignored: missing coordinates")
+        logging.info(parsed.get('from') + " ignored: empty coordinates")
         return
 
     if 0.1 > parsed.get('latitude') > -0.1 and 0.1 > parsed.get('longitude') > -0.1:
         logging.info(parsed.get('from') + " ignored: GPS positioning error (" + str(parsed.get('latitude')) + str(parsed.get('longitude')) + ")")
         return
 
+    if parsed.get('altitude') is not None and parsed.get('altitude') < 0:
+        logging.info(parsed.get('from') + " ignored: wrong altitude (" + str(parsed.get("altitude")) + ")")
+        return
+
     if configuration['aprs']['ignore_comment'] is not None and len(configuration['aprs']['ignore_comment']) > 0:
         regexp = re.compile(r'(' + '|'.join(configuration['aprs']['ignore_comment']) + ')')
         if regexp.search(parsed.get('comment')):
-            logging.info(parsed.get('from') + " ignored: comment has prohibited phrase in it (" + parsed.get("comment") + ")")
+            logging.debug(parsed.get('from') + " ignored: comment has prohibited phrase in it (" + parsed.get("comment") + ")")
             return
 
     if configuration['aprs']['ignore_call_sign'] is not None and parsed.get('from') in configuration['aprs']['ignore_call_sign']:
         logging.info(parsed.get('from') + " ignored: call sign in ignore list")
         return
 
-    query = """INSERT INTO `history` SET
+    check_duplicate_query = """SELECT
+        COUNT(*) AS `duplicates`
+    FROM
+        `history`
+    WHERE
+        `date` > UTC_TIMESTAMP() - INTERVAL 10 MINUTE AND
+        `call_sign` = %s AND
+        `latitude` = %s AND
+        `longitude` = %s
+    LIMIT 1
+    """
+    check_duplicate_params = (
+        parsed.get('from'),
+        parsed.get('latitude'),
+        parsed.get('longitude')
+    )
+
+    crs = db.cursor()
+    crs.execute(check_duplicate_query, check_duplicate_params)
+    check_duplicate_result = crs.fetchone()
+    crs.close()
+
+    if check_duplicate_result[0] > 0:
+        logging.warning(parsed.get('from') + " found duplicate, previous row will be removed")
+
+        delete_query = """DELETE
+        FROM
+            `history`
+        WHERE
+            `date` > UTC_TIMESTAMP() - INTERVAL 10 MINUTE AND
+            `call_sign` = %s AND
+            `latitude` = %s AND
+            `longitude` = %s
+        LIMIT 1
+        """
+        delete_params = (
+            parsed.get('from'),
+            parsed.get('latitude'),
+            parsed.get('longitude')
+        )
+
+        crs = db.cursor()
+        crs.execute(delete_query, delete_params)
+        db.commit()
+        crs.close()
+
+    insert_query = """INSERT INTO
+        `history`
+    SET
         `call_sign` = %s,
         `date` = UTC_TIMESTAMP(),
         `timestamp` = %s,
@@ -124,7 +168,7 @@ def callback(packet):
             `comment` = %s,
             `raw` = %s
     ;"""
-    params = (
+    insert_params = (
         parsed.get('from'),
         parsed.get('timestamp'),
         parsed.get('latitude'),
@@ -149,7 +193,7 @@ def callback(packet):
     )
 
     crs = db.cursor()
-    crs.execute(query, params)
+    crs.execute(insert_query, insert_params)
     db.commit()
     crs.close()
 
