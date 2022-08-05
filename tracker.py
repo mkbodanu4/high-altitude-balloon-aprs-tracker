@@ -65,12 +65,12 @@ def callback(packet):
     except (aprslib.ParseError, aprslib.UnknownFormat) as exp:
         return
 
-    # Packed must be routed to APRS-IS by IGate only, so app will ignore Radiosonde traffic etc
-    q = parsed.get('path')[-2]
-    if q not in ['qAR', 'qAO', 'qAo']:
-        logging.info("Packet from " + parsed.get('from') + " (" + q + "," + parsed.get('via') + "; " + parsed.get(
-            "comment") + ") ignored")
-        return
+    if configuration['aprs']['allowed_q_construct'] is not None:
+        q = parsed.get('path')[-2]
+        if q not in configuration['aprs']['allowed_q_construct']:
+            logging.info("Packet from " + parsed.get('from') + " (" + q + "," + parsed.get('via') + "; " + parsed.get(
+                "comment") + ") ignored for having q construct not in allowed list")
+            return
 
     if not (parsed.get('latitude') and parsed.get('longitude')):
         logging.info("Packet from " + parsed.get('from') + " has empty coordinates, ignored")
@@ -93,14 +93,15 @@ def callback(packet):
             'from') + " ignored for wrong coordinates: very close to 0,0 , looks like GPS positioning error")
         return
 
-    regexp = re.compile(r'(' + '|'.join(configuration['aprs']['ignore_comment']) + ')')
-    if regexp.search(parsed.get('comment')):
-        logging.info("Packet from " + parsed.get('from') + " (" + parsed.get(
-            "comment") + ") ignored for being Radiosonde, not amateur radio balloon")
-        return
+    if configuration['aprs']['ignore_comment'] is not None and len(configuration['aprs']['ignore_comment']) > 0:
+        regexp = re.compile(r'(' + '|'.join(configuration['aprs']['ignore_comment']) + ')')
+        if regexp.search(parsed.get('comment')):
+            logging.info("Packet from " + parsed.get('from') + " (" + parsed.get(
+                "comment") + ") ignored for having phrase in comment that must be ignored")
+            return
 
-    if parsed.get('from') in configuration['aprs']['ignore_call_sign']:
-        logging.info("Packet from " + parsed.get('from') + " ignored, reason: ignore list")
+    if configuration['aprs']['ignore_call_sign'] is not None and parsed.get('from') in configuration['aprs']['ignore_call_sign']:
+        logging.info("Packet from " + parsed.get('from') + " ignored for being in ignore call signs list")
         return
 
     query = """INSERT INTO `history` SET

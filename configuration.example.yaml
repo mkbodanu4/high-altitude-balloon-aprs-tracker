@@ -2,16 +2,19 @@ aprs:
   callsign: 'UR5WKM-10'
   host: "rotate.aprs2.net"
   filter: "s/O"
+  allowed_q_construct:
+    - "qAR"
+    - "qAO"
+    - "qAo"
+    - "qAS"
   ignore_comment:
-    - "RS41"
+    - "RS41 tracker"
+    - "NSM is Not Sonde Monitor"
+    - "ZOE APRS EV ZERO-EMMISSION"
     - "auto_rx"
     - "Radiosonde"
     - "SondeID"
-    - "NSM is Not Sonde Monitor"
-    - "ZOE APRS EV ZERO-EMMISSION"
   ignore_call_sign:
-    - "PC4L-15"
-    - "PC4L-13"
     - "WIDE3-3"
     - "WIDE3-2"
     - "WIDE3-1"
