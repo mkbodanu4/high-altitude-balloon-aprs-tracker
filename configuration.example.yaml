@@ -9,12 +9,14 @@ aprs:
     - "qAo"
     - "qAS"
   ignore_comment:
-    - "RS41 tracker"
+    - "RS41"
     - "NSM is Not Sonde Monitor"
     - "ZOE APRS EV ZERO-EMMISSION"
     - "auto_rx"
     - "Radiosonde"
     - "SondeID"
+    - "rdzTTGOsonde"
+    - "402.300MHz"
   ignore_call_sign:
     - "WIDE3-3"
     - "WIDE3-2"
