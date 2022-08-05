@@ -63,45 +63,39 @@ def callback(packet):
     try:
         parsed = aprslib.parse(packet)
     except (aprslib.ParseError, aprslib.UnknownFormat) as exp:
+        logging.info(packet + " ignored: can't be parsed")
         return
 
     if configuration['aprs']['allowed_q_construct'] is not None:
         q = parsed.get('path')[-2]
         if q not in configuration['aprs']['allowed_q_construct']:
-            logging.info("Packet from " + parsed.get('from') + " (" + q + "," + parsed.get('via') + "; " + parsed.get(
-                "comment") + ") ignored for having q construct not in allowed list")
+            logging.info(parsed.get('from') + " ignored: q construct prohibited (" + q + "," + parsed.get('via') + "; " + parsed.get("comment") + ")")
             return
 
     if not (parsed.get('latitude') and parsed.get('longitude')):
-        logging.info("Packet from " + parsed.get('from') + " has empty coordinates, ignored")
+        logging.info(parsed.get('from') + " ignored: empty coordinates")
         return
 
     if parsed.get('altitude') is not None and parsed.get('altitude') < 0:
-        logging.info(
-            "Packet from " + parsed.get('from') + " ignored for wrong altitude (" + str(parsed.get("altitude")) + " m)")
+        logging.info(parsed.get('from') + " ignored: wrong altitude (" + str(parsed.get("altitude")) + ")")
         return
 
-    if parsed.get('latitude') is None and parsed.get('longitude') is None and parsed.get('latitude') is None and parsed.get(
-            'longitude') is None:
-        logging.info("Packet from " + parsed.get(
-            'from') + " ignored for missing coordinates.")
+    if parsed.get('latitude') is None or parsed.get('longitude') is None:
+        logging.info(parsed.get('from') + " ignored: missing coordinates")
         return
 
-    if parsed.get('latitude') < 0.1 and parsed.get('longitude') < 0.1 and parsed.get('latitude') > -0.1 and parsed.get(
-            'longitude') > -0.1:
-        logging.info("Packet from " + parsed.get(
-            'from') + " ignored for wrong coordinates: very close to 0,0 , looks like GPS positioning error")
+    if 0.1 > parsed.get('latitude') > -0.1 and 0.1 > parsed.get('longitude') > -0.1:
+        logging.info(parsed.get('from') + " ignored: GPS positioning error (" + str(parsed.get('latitude')) + str(parsed.get('longitude')) + ")")
         return
 
     if configuration['aprs']['ignore_comment'] is not None and len(configuration['aprs']['ignore_comment']) > 0:
         regexp = re.compile(r'(' + '|'.join(configuration['aprs']['ignore_comment']) + ')')
         if regexp.search(parsed.get('comment')):
-            logging.info("Packet from " + parsed.get('from') + " (" + parsed.get(
-                "comment") + ") ignored for having phrase in comment that must be ignored")
+            logging.info(parsed.get('from') + " ignored: comment has prohibited phrase in it (" + parsed.get("comment") + ")")
             return
 
     if configuration['aprs']['ignore_call_sign'] is not None and parsed.get('from') in configuration['aprs']['ignore_call_sign']:
-        logging.info("Packet from " + parsed.get('from') + " ignored for being in ignore call signs list")
+        logging.info(parsed.get('from') + " ignored: call sign in ignore list")
         return
 
     query = """INSERT INTO `history` SET
@@ -159,10 +153,10 @@ def callback(packet):
     db.commit()
     crs.close()
 
-    logging.info("Packet from " + parsed.get('from') + " saved to history")
+    logging.info(parsed.get('from') + " saved")
 
 
-AIS = aprslib.IS(configuration['aprs']['callsign'], passwd="-1", host=configuration['aprs']['host'], port=14580)
+AIS = aprslib.IS(configuration['aprs']['callsign'], passwd="-1", host=configuration['aprs']['host'], port=configuration['aprs']['port'])
 AIS.set_filter(configuration['aprs']['filter'])
 AIS.connect()
 AIS.consumer(callback, raw=True)
