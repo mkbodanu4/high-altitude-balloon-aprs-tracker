@@ -5,7 +5,7 @@ Python-based APRS-IS data collector of High Altitude Balloon APRS Tracker. Requi
 
 * aprslib=0.7.2
 * pyaml=6.0
-* mysql-connector-python=8.0.29
+* mysqlclient=2.1.1
 
 ## Installation
 
