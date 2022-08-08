@@ -176,7 +176,6 @@ def callback(packet):
         `course` = %s,
         `speed` = %s,
         `altitude` = %s,
-        `daodatumbyte` = %s,
         `comment` = %s,
         `raw` = %s
     ON DUPLICATE KEY
@@ -189,7 +188,6 @@ def callback(packet):
             `course` = %s,
             `speed` = %s,
             `altitude` = %s,
-            `daodatumbyte` = %s,
             `comment` = %s,
             `raw` = %s
     ;"""
@@ -201,7 +199,6 @@ def callback(packet):
         parsed.get('course'),
         parsed.get('speed'),
         parsed.get('altitude'),
-        parsed.get('daodatumbyte'),
         parsed.get('comment'),
         parsed.get('raw'),
 
@@ -212,7 +209,6 @@ def callback(packet):
         parsed.get('course'),
         parsed.get('speed'),
         parsed.get('altitude'),
-        parsed.get('daodatumbyte'),
         parsed.get('comment'),
         parsed.get('raw')
     )

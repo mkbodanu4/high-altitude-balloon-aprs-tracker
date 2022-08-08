@@ -8,10 +8,8 @@ CREATE TABLE `history`
     `course`       INT         NULL,
     `speed`        FLOAT       NULL,
     `altitude`     FLOAT       NULL,
-    `daodatumbyte` VARCHAR(1)  NULL,
     `comment`      TEXT        NULL,
     `raw`          TEXT        NULL,
     CONSTRAINT `call_sign_date` PRIMARY KEY (`date`, `call_sign`),
-    UNIQUE `call_sign_values` (`call_sign`, `latitude`, `longitude`, `altitude`, `speed`, `comment`),
     INDEX `call_sign` (`call_sign`)
 ) ENGINE = InnoDB;
