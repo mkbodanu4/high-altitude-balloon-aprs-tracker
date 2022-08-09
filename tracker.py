@@ -95,7 +95,7 @@ def callback(packet):
         logging.info(parsed.get('from') + " ignored: GPS positioning error (" + str(parsed.get('latitude')) + str(parsed.get('longitude')) + ")")
         return
 
-    if parsed.get('altitude') is not None and parsed.get('altitude') < 0:
+    if parsed.get('altitude') is None or parsed.get('altitude') < 0.3:  # 0.3 meters is 1 feet and ballot must be at least 1 feet above ground
         logging.info(parsed.get('from') + " ignored: wrong altitude (" + str(parsed.get("altitude")) + ")")
         return
 
