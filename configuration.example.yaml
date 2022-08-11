@@ -10,6 +10,7 @@ aprs:
     - "qAS"
   ignore_comment:
     - "RS41"
+    - "DFM09"
     - "NSM is Not Sonde Monitor"
     - "ZOE APRS EV ZERO-EMMISSION"
     - "auto_rx"
