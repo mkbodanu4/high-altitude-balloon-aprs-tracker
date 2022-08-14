@@ -81,10 +81,40 @@ def callback(packet):
         logging.warning(packet + " ignored: can't be parsed (" + exception + ")")
         return
 
-    if configuration['aprs']['allowed_q_construct'] is not None:
-        q = parsed.get('path')[-2]
-        if q not in configuration['aprs']['allowed_q_construct']:
-            logging.debug(parsed.get('from') + " ignored: q construct prohibited (" + q + "," + parsed.get('via') + "; " + parsed.get("comment") + ")")
+    q = parsed.get('path')[-2]
+    if q not in ['qAR', 'qAO', 'qAo']:
+        logging.debug(parsed.get('from') + " ignored: q construct prohibited (" + q + "," + parsed.get('via') + "; " + parsed.get("comment") + ")")
+        return
+
+    if q in ['qAS']:
+        check_strict_duplicate_query = """SELECT
+                (ROUND(`latitude`, 6) = ROUND(%s, 6) AND ROUND(`longitude`, 6) = ROUND(%s, 6)) AS `duplicates`
+            FROM
+                `history`
+            WHERE
+                `call_sign` = %s
+            ORDER BY
+                `date` DESC
+            LIMIT 1;
+            """
+        check_strict_duplicate_params = (
+            parsed.get('latitude'),
+            parsed.get('longitude'),
+            parsed.get('from')
+        )
+
+        check_strict_duplicate_result = None
+        crs = db.cursor()
+        try:
+            crs.execute(check_strict_duplicate_query, check_strict_duplicate_params)
+            check_strict_duplicate_result = crs.fetchone()
+        except Exception as exception:
+            logging.error("MySQL Error: " + str(exception))
+        finally:
+            crs.close()
+
+        if check_strict_duplicate_result is not None and check_strict_duplicate_result[0] > 0:
+            logging.warning(parsed.get('from') + " ignored: packet received from APRS-IS station over TCP-IP with duplicate coordinates (" + q + "," + parsed.get('via') + "; " + parsed.get("comment") + ")")
             return
 
     if parsed.get('latitude') is None or parsed.get('longitude') is None:
@@ -92,7 +122,7 @@ def callback(packet):
         return
 
     if 0.1 > parsed.get('latitude') > -0.1 and 0.1 > parsed.get('longitude') > -0.1:
-        logging.info(parsed.get('from') + " ignored: GPS positioning error (" + str(parsed.get('latitude')) + str(parsed.get('longitude')) + ")")
+        logging.warning(parsed.get('from') + " ignored: GPS positioning error (" + str(parsed.get('latitude')) + "," + str(parsed.get('longitude')) + "; via " + parsed.get('via') + ")")
         return
 
     if parsed.get('altitude') is None or parsed.get('altitude') < 0.3:  # 0.3 meters is 1 feet and ballot must be at least 1 feet above ground
@@ -116,8 +146,8 @@ def callback(packet):
     WHERE
         `date` > UTC_TIMESTAMP() - INTERVAL 10 MINUTE AND
         `call_sign` = %s AND
-        `latitude` = %s AND
-        `longitude` = %s
+        ROUND(`latitude`, 6) = ROUND(%s, 6) AND
+        ROUND(`longitude`, 6) = ROUND(%s, 6)
     LIMIT 1
     """
     check_duplicate_params = (
@@ -145,8 +175,8 @@ def callback(packet):
         WHERE
             `date` > UTC_TIMESTAMP() - INTERVAL 10 MINUTE AND
             `call_sign` = %s AND
-            `latitude` = %s AND
-            `longitude` = %s
+            ROUND(`latitude`, 6) = ROUND(%s, 6) AND
+            ROUND(`longitude`, 6) = ROUND(%s, 6)
         LIMIT 1
         """
         delete_params = (

@@ -3,11 +3,6 @@ aprs:
   host: "rotate.aprs2.net"
   port: 14580
   filter: "s/O"
-  allowed_q_construct:
-    - "qAR"
-    - "qAO"
-    - "qAo"
-    - "qAS"
   ignore_comment:
     - "RS41"
     - "DFM09"
