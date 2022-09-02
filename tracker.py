@@ -167,7 +167,7 @@ def callback(packet):
         crs.close()
 
     if check_duplicate_result is not None and check_duplicate_result[0] > 0:
-        logging.warning(parsed.get('from') + " found duplicate, previous row will be removed")
+        logging.info(parsed.get('from') + " found duplicate, previous row will be removed")
 
         delete_query = """DELETE
         FROM

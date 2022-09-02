@@ -1,6 +1,6 @@
 aprs:
   callsign: 'UR5WKM-10'
-  host: "rotate.aprs2.net"
+  host: "rotate.aprs.net"
   port: 14580
   filter: "s/O"
   ignore_comment:
