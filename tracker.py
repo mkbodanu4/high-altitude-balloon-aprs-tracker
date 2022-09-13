@@ -109,7 +109,7 @@ def callback(packet):
             crs.execute(check_strict_duplicate_query, check_strict_duplicate_params)
             check_strict_duplicate_result = crs.fetchone()
         except Exception as exception:
-            logging.error("MySQL Error: " + str(exception))
+            logging.error("MySQL Error during q construct validation: " + str(exception))
         finally:
             crs.close()
 
@@ -162,7 +162,7 @@ def callback(packet):
         crs.execute(check_duplicate_query, check_duplicate_params)
         check_duplicate_result = crs.fetchone()
     except Exception as exception:
-        logging.error("MySQL Error: " + str(exception))
+        logging.error("MySQL Error during duplicate validation: " + str(exception))
     finally:
         crs.close()
 
@@ -190,7 +190,7 @@ def callback(packet):
             crs.execute(delete_query, delete_params)
             db.commit()
         except Exception as exception:
-            logging.error("MySQL Error: " + str(exception))
+            logging.error("MySQL Error during duplicates removing: " + str(exception))
             db.rollback()
         finally:
             crs.close()
@@ -248,7 +248,7 @@ def callback(packet):
         crs.execute(insert_query, insert_params)
         db.commit()
     except Exception as exception:
-        logging.error("MySQL Error: " + str(exception))
+        logging.error("MySQL Error during inserting new row: " + str(exception))
         db.rollback()
     finally:
         crs.close()
