@@ -257,13 +257,15 @@ def callback(packet):
 
 
 try:
+    logging.warning("Program starting")
     AIS = aprslib.IS(configuration['aprs']['callsign'], passwd="-1", host=configuration['aprs']['host'], port=configuration['aprs']['port'])
     AIS.set_filter(configuration['aprs']['filter'])
     AIS.connect()
     AIS.consumer(callback, raw=True)
 except Exception as e:
-    logging.error("MySQL Error: " + str(e))
+    logging.error("APRS-IS Client Error: " + str(e))
 except KeyboardInterrupt:
-    logging.info("Program stopping")
+    logging.info("Received closing command from user")
 finally:
+    logging.warning("Program stopping")
     db.close()
