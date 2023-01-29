@@ -3,6 +3,7 @@ import aprslib
 import yaml
 import logging
 import time
+import sys
 import re
 
 with open("configuration.yaml", 'r') as stream:
@@ -85,6 +86,13 @@ def callback(packet):
     if q not in ['qAR', 'qAO', 'qAo']:
         logging.debug(parsed.get('from') + " ignored: q construct prohibited (" + q + "," + parsed.get('via') + "; " + parsed.get("comment") + ")")
         return
+
+    # If there is more than two elements (q construct and via call sign) its quite possible that packed was routed from some server
+    if len(parsed.get('path')) > 2:
+        first_element = parsed.get('path')[0]
+        if first_element in configuration['aprs']['ignore_first_path_element']:
+            logging.info(parsed.get('from') + " ignored: path first element is in ignore list (" + ",".join(parsed.get('path')) + ")")
+            return
 
     if q in ['qAS']:
         check_strict_duplicate_query = """SELECT
@@ -263,7 +271,13 @@ try:
     AIS.connect()
     AIS.consumer(callback, raw=True)
 except Exception as e:
-    logging.error("APRS-IS Client Error: " + str(e))
+    trace = []
+    tb = e.__traceback__
+    while tb is not None:
+        trace.append(tb.tb_frame.f_code.co_filename + ": " + str(tb.tb_lineno))
+        tb = tb.tb_next
+
+    logging.error("APRS-IS Client Error: " + type(e).__name__ + ": " + str(e) + " >>> " + ", ".join(trace))
 except KeyboardInterrupt:
     logging.info("Received closing command from user")
 finally:

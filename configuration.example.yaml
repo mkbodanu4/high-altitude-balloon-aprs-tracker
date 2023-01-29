@@ -3,6 +3,10 @@ aprs:
   host: "rotate.aprs.net"
   port: 14580
   filter: "s/O"
+  ignore_first_path_element:
+    - "SONDEGATE"
+    - "TCPIP"
+    - "qAS"
   ignore_comment:
     - "RS41"
     - "DFM09"
